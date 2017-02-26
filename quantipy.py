@@ -1,34 +1,36 @@
 from collections import defaultdict
 
-class Physical_quantity(object):
+
+class PhysicalQuantity(object):
     value = 0
     unit = None
-    def __init__(self,value,unit_str=None,**kwargs):
+
+    def __init__(self, value, unit_str=None, **kwargs):
         self.value = value
-        if unit_str!=None:
-            self.unit = Unit(unit_str)
-        else:
+        if unit_str is None:
             self.unit = kwargs['unit_obj']
+        else:
+            self.unit = Unit(unit_str)
 
     def __repr__(self):
-        return "%s %s"%(self.value.__repr__(),self.unit.__repr__()) 
+        return "%s %s"%(self.value.__repr__(), self.unit.__repr__())
     
-    def __add__(self,other):
-        return Physical_quantity(self.value+other.value,unit_obj=self.unit+other.unit)
+    def __add__(self, other):
+        return PhysicalQuantity(self.value + other.value, unit_obj=self.unit + other.unit)
     
-    def __sub__(self,other):
-        return Physical_quantity(self.value-other.value,unit_obj=self.unit-other.unit)
+    def __sub__(self, other):
+        return PhysicalQuantity(self.value - other.value, unit_obj=self.unit - other.unit)
 
-    def __mul__(self,other):
-        return Physical_quantity(self.value*other.value,unit_obj=self.unit*other.unit)
+    def __mul__(self, other):
+        return PhysicalQuantity(self.value * other.value, unit_obj=self.unit * other.unit)
 
-    def __div__(self,other):
-        return Physical_quantity(self.value/other.value,unit_obj=self.unit/other.unit)
+    def __div__(self, other):
+        return PhysicalQuantity(self.value / other.value, unit_obj=self.unit / other.unit)
 
-    def __truediv__(self,other):
-        return Physical_quantity(self.value/other.value,unit_obj=self.unit/other.unit)
+    def __truediv__(self, other):
+        return PhysicalQuantity(self.value / other.value, unit_obj=self.unit / other.unit)
 
-    def __eq__(self,other):
+    def __eq__(self, other):
         if self.value == other.value and self.unit == other.unit:
             return True
         else:
@@ -36,69 +38,68 @@ class Physical_quantity(object):
 
 
 class Unit(object):
-    def __init__(self,unit_str=None,**kwargs):
-        if unit_str!=None:
-            self.powers = Unit.decompose(unit_str)
+    def __init__(self, unit_str=None, **kwargs):
+        if unit_str is None:
+            self.powers = kwargs.get('powers', None)
         else: 
-            self.powers = kwargs.get('powers',None)
-        if self.powers==None:
+            self.powers = Unit.decompose(unit_str)
+        if self.powers is None:
             print("creating unit failed. Powers = None")
          
     @classmethod
-    def from_dict(cls,_powers):
+    def from_dict(cls, _powers):
         return cls(powers=_powers)
 
-
-    def __eq__(self,other):
-        if self.powers==other.powers:
+    def __eq__(self, other):
+        if self.powers == other.powers:
             return True
         else:
             return False
     
-    def __add__(self,other):
-        if self==other:
+    def __add__(self, other):
+        if self == other:
             return self
         else:
             print("You can only add units of same type! Returning: None")
             return None
 
-    def __sub__(self,other):
+    def __sub__(self, other):
         return self+other
 
-    def __mul__(self,other):
+    def __mul__(self, other):
         res=defaultdict(lambda: 0)
         for name in self.powers.keys():
-            res[name]+=self.powers[name]
+            res[name] += self.powers[name]
         for name in other.powers.keys():
-            res[name]+=other.powers[name]
-        Unit.remove_zero_powers(res) #dict is passed by reference, hence no return value      
+            res[name] += other.powers[name]
+        Unit.remove_zero_powers(res)  # dict is passed by reference, hence no return value
         return Unit.from_dict(dict(res))
 
     def __invert__(self):
-        return Unit.from_dict(dict( (i,-k) for i,k in self.powers.items() ))
+        return Unit.from_dict(dict((i, -k) for i, k in self.powers.items()))
 
-    def __div__(self,other):
+    def __div__(self, other):
         return self*(~other)
 
-    def __truediv__(self,other):
+    def __truediv__(self, other):
         return self*(~other)
 
     def __repr__(self):
 
-        if self.powers=={}:
+        if self.powers == {}:
             return "(no unit)"
-        retpos=[]
-        retneg=[]
+        retpos = []
+        retneg = []
         for name,power in self.powers.items():
-            if float(power)==1.:
+            if float(power) == 1.:
                 retpos.append(str(name))
             elif float(power).is_integer():
-                if float(power)>=0:
+                if float(power) >= 0:
                     retpos.append(str(name)+'^'+str(int(power)))
                 else:
                     retneg.append(str(name)+'^'+str(int(power)))
             else:
-                if float(power)>=0:
+                if float(power) >= 0:
                     retpos.append(str(name)+"^"+str(power))
                 else:
                     retneg.append(str(name)+"^"+str(power))
@@ -107,35 +108,32 @@ class Unit(object):
 
     @staticmethod
     def remove_zero_powers(power_dict):
-        for key,val in power_dict.items():
-            if val==0:
+        for key, val in power_dict.items():
+            if val == 0:
                 power_dict.pop(key)
 
     @staticmethod
     def decompose(unit_str):
-        power_dict={}
-        if unit_str=="" or unit_str.isspace():
+        power_dict = {}
+        if unit_str == "" or unit_str.isspace():
             return power_dict
-        factors=unit_str.split('*')
+        factors = unit_str.split('*')
         for fac in factors:
-            divs=fac.split('/')
+            divs = fac.split('/')
             try:
-                name,power=divs[0].split('^')
+                name, power = divs[0].split('^')
                 power_dict[name] = float(power)
             except:
                 power_dict[divs[0]] = 1.
                 
             for div in divs[1:]:
                 try:
-                    name,power=div.split('^')
+                    name, power = div.split('^')
                     power_dict[name] = -float(power)
                 except:
                     power_dict[div] = -1.
-        if power_dict.has_key('1'):
+        if '1' in power_dict:
             power_dict.pop('1')
         Unit.remove_zero_powers(power_dict)
         return power_dict
-            
 
-
-        

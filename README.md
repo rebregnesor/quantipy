@@ -1,3 +1,3 @@
 # quantipy
 
-Handling physical quantitiest in Python
+Handling physical quantities in Python
